@@ -1,5 +1,5 @@
 // Service worker: lưu game vào máy để chơi được khi mất mạng
-const CACHE = 'mongmo-202611241803';
+const CACHE = 'mongmo-202611241808';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'])).then(() => self.skipWaiting()));
 });
