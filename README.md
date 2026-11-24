@@ -2,7 +2,9 @@
 
 Game mô phỏng bán hàng ở tiệm tạp hóa Việt Nam (bà chủ: Cô Hoa). Chạy thẳng trên trình duyệt, không cần cài đặt.
 
-Bản online: https://claude.ai/artifact/VnV1nzvqWhYfS17ETHP5Pk (cần bấm Share để người khác mở được).
+**Chơi online:** https://nguyendiemdz1809.github.io/tiem-tap-hoa-mong-mo/
+
+Trên điện thoại: mở link → menu trình duyệt → "Thêm vào màn hình chính" để chơi như app, kể cả khi mất mạng.
 
 ## Chạy game
 Mở `index.html` bằng Chrome / Edge (bấm đúp là được). Tiến trình tự lưu vào trình duyệt mỗi 5 giây (tắt giữa ngày vẫn chơi tiếp được).
@@ -16,6 +18,13 @@ Mở `index.html` bằng Chrome / Edge (bấm đúp là được). Tiến trình
 - 🎵 **Nhạc nền** ngũ cung tự tạo (đàn tranh, đàn bầu, mõ) — đổi giai điệu khi trời tối / mưa. Nút 🎵 để bật/tắt.
 - 🌙 **Offline vẫn có tiền**: đóng game hoặc chuyển tab ≥ 1 phút, Cô Hoa bán giùm (tối đa 8 tiếng, ~8 món/giờ, chỉ bán hàng còn trên kệ). Khách nợ có thể ghé trả.
 - Phím tắt: `Space` tạm dừng, `Enter` giao hàng, nút `×2` tua nhanh.
+
+## Cập nhật lên web
+Sửa code xong, chạy trong Git Bash:
+```bash
+bash tools/deploy.sh "mô tả thay đổi"
+```
+Khoảng 1 phút sau trang web có bản mới.
 
 ## Cấu trúc
 | File | Nội dung |
