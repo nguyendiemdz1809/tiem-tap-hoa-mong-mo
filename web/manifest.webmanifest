@@ -1,0 +1,19 @@
+{
+  "name": "Tiệm Tạp Hóa Mộng Mơ",
+  "short_name": "Mộng Mơ",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#2b211b",
+  "theme_color": "#3b2a20",
+  "lang": "vi",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
