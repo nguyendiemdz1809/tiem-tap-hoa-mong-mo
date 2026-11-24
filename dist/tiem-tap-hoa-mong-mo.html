@@ -2,8 +2,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap&subset=vietnamese">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { width: 100%; height: 100%; overflow: hidden; background: #2b211b; font-family: "Patrick Hand", "Segoe Print", "Comic Sans MS", cursive; color: #3b2a20; user-select: none; -webkit-user-select: none; }
-#stage { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; touch-action: manipulation; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; background: #2b211b; font-family: "Patrick Hand", "Segoe Print", "Comic Sans MS", cursive; color: #3b2a20; user-select: none; -webkit-user-select: none; }
+#stage { --ox: 0px; --s: 1; position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; }
 #game { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; touch-action: none; }
 #ui { position: absolute; inset: 0; pointer-events: none; }
 #ui > * { pointer-events: auto; }
@@ -17,7 +17,8 @@ b { font-weight: bold; }
 .stars { color: #f0a500; letter-spacing: 1px; text-shadow: 0 1px 0 #7a4a00; }
 
 /* ---------- HUD ---------- */
-#hud { position: absolute; top: 0; left: 0; right: 0; height: 42px; display: flex; justify-content: space-between; align-items: center; padding: 0 10px;
+#hud { position: absolute; top: 0; left: 0; right: 0; height: 42px; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 0 calc(10px + env(safe-area-inset-right, 0px) / var(--s)) 0 calc(10px + env(safe-area-inset-left, 0px) / var(--s));
   background: linear-gradient(rgba(59,42,32,.92), rgba(59,42,32,.7)); border-bottom: 2px solid rgba(0,0,0,.25); }
 .hgroup { display: flex; gap: 6px; align-items: center; }
 .chip { background: #fff8e6; border: 2px solid #3b2a20; border-radius: 16px; padding: 2px 12px; font-size: 18px; white-space: nowrap; box-shadow: 0 2px 0 rgba(0,0,0,.3); }
@@ -42,7 +43,7 @@ b { font-weight: bold; }
 .off-warn { font-size: 18px; color: #b04a00; background: #ffeedd; border-radius: 10px; padding: 6px 12px; }
 
 /* ---------- thanh hành động ---------- */
-#bar { position: absolute; left: 292px; right: 10px; bottom: 8px; height: 100px; display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+#bar { position: absolute; left: calc(var(--ox) + 292px); right: calc(10px + env(safe-area-inset-right, 0px) / var(--s)); bottom: calc(8px + env(safe-area-inset-bottom, 0px) / var(--s)); height: 100px; display: flex; align-items: center; gap: 12px; padding: 8px 12px;
   background: rgba(255,248,230,.96); border: 3px solid #3b2a20; border-radius: 16px; box-shadow: 0 5px 0 rgba(59,42,32,.5); }
 #bar:empty { display: none; }
 .bar-msg { flex: 1; font-size: 21px; padding-left: 6px; }
@@ -69,7 +70,7 @@ b { font-weight: bold; }
 .btn[disabled] { opacity: .45; cursor: not-allowed; }
 
 /* ---------- thối tiền ---------- */
-#change { position: absolute; right: 14px; top: 52px; width: 420px; background: #fff8e6; border: 3px solid #3b2a20; border-radius: 16px; padding: 12px 14px;
+#change { position: absolute; right: calc(14px + env(safe-area-inset-right, 0px) / var(--s)); top: 52px; width: 420px; background: #fff8e6; border: 3px solid #3b2a20; border-radius: 16px; padding: 12px 14px;
   box-shadow: 0 6px 0 rgba(59,42,32,.55); display: flex; flex-direction: column; gap: 6px; z-index: 5; }
 #change.shake { animation: shake .35s; }
 @keyframes shake { 20%,60% { transform: translateX(-8px); } 40%,80% { transform: translateX(8px); } }
@@ -161,9 +162,57 @@ b { font-weight: bold; }
 .toast { background: rgba(59,42,32,.94); color: #fff8e6; font-size: 20px; padding: 6px 18px; border-radius: 14px; border: 2px solid #ffd66b; animation: pop .2s; transition: opacity .5s, transform .5s; }
 .toast.out { opacity: 0; transform: translateY(-10px); }
 
-#rotate { display: none; position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: #ffd66b; color: #3b2a20;
-  border: 2px solid #3b2a20; border-radius: 14px; padding: 8px 16px; font-size: 18px; white-space: nowrap; box-shadow: 0 3px 0 #3b2a20; pointer-events: none; }
-@media (orientation: portrait) and (max-width: 820px) { #rotate { display: block; } }
+/* ---------- điện thoại cầm dọc ---------- */
+#rotate { display: none; position: fixed; inset: 0; z-index: 50; background: radial-gradient(circle at 50% 40%, #4a3628, #2b211b); color: #fff8e6; align-items: center; justify-content: center; padding: 24px; }
+@media (orientation: portrait) and (max-width: 900px) { #rotate { display: flex; } body.rot-skip #rotate { display: none; } }
+.rot-box { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; max-width: 340px; }
+.rot-box b { font-size: 28px; color: #ffd66b; }
+.rot-box span { font-size: 19px; opacity: .9; }
+.rot-box .muted { color: #e0cfa8; font-size: 17px; }
+.rot-phone { font-size: 84px; animation: rot 2.2s ease-in-out infinite; }
+@keyframes rot { 0%, 25% { transform: rotate(0); } 55%, 85% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
+.rot-skip { background: none; border: none; color: #e0cfa8; text-decoration: underline; font-size: 16px; margin-top: 8px; }
+.hbtn.on { background: #9fd3a3; }
+
+/* ---------- chế độ điện thoại: chữ & nút to hơn ---------- */
+body.phone #hud { height: 54px; }
+body.phone .chip { font-size: 23px; padding: 3px 12px; }
+body.phone .hbtn { font-size: 23px; padding: 4px 11px; }
+body.phone .hbtn .lbl { display: none; }
+body.phone #toasts { top: 62px; }
+body.phone .toast { font-size: 25px; }
+body.phone #bar { height: 124px; gap: 14px; }
+body.phone .bar-msg { font-size: 27px; }
+body.phone .bag-label { font-size: 19px; }
+body.phone .hint { font-size: 22px; }
+body.phone .chipitem { font-size: 24px; }
+body.phone .chipitem .ic { width: 44px; height: 58px; }
+body.phone .total { min-width: 140px; }
+body.phone .total small { font-size: 17px; }
+body.phone .total b { font-size: 28px; }
+body.phone .btn { font-size: 24px; padding: 12px 16px; }
+body.phone .btn small { display: none; }
+body.phone #change { top: 62px; width: 500px; gap: 7px; padding: 12px 16px; }
+body.phone .ch-head { font-size: 30px; }
+body.phone .ch-row, body.phone .ch-row b { font-size: 24px; }
+body.phone .ch-sub { font-size: 18px; }
+body.phone .bill { width: 108px; height: 50px; font-size: 22px; }
+body.phone .ch-bills .bill, body.phone .ch-tray .bill { width: 84px; height: 40px; font-size: 19px; }
+body.phone #modal { width: 720px; max-height: 700px; padding: 16px 22px; }
+body.phone #modal.wide { width: min(1240px, calc(100% - 40px)); }
+body.phone #modal h2 { font-size: 36px; }
+body.phone .m-sub { font-size: 21px; }
+body.phone .rs-grid { grid-template-columns: repeat(3, 1fr); }
+body.phone .rs-info { font-size: 20px; }
+body.phone .rs-info small { font-size: 15px; }
+body.phone .rs-btns button { font-size: 18px; padding: 3px 8px; min-width: 52px; }
+body.phone .rs-scroll, body.phone .up-list { max-height: 560px; }
+body.phone .up-info b { font-size: 24px; }
+body.phone .up-info p { font-size: 19px; }
+body.phone .sum-grid > div { font-size: 23px; }
+body.phone .help ol { font-size: 22px; }
+body.phone .debts { font-size: 23px; }
+body.phone .mclose { width: 50px; height: 50px; font-size: 26px; }
 
 ::-webkit-scrollbar { width: 10px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: #c9a96a; border-radius: 5px; }
@@ -1218,28 +1267,30 @@ function nightAmount(m) {
   return Math.min(0.55, (m - 17.6 * 60) / (2 * 60) * 0.55);
 }
 
-function drawSky(c, minute, weather, t) {
+function drawSky(c, minute, weather, t, ox = 0) {
   let [top, bot] = lerpColorKeys(SKY_KEYS, minute);
   if (weather === 'mua') { top = mix(top, '#7d8a94', 0.6); bot = mix(bot, '#a9b3ba', 0.6); }
   const g = c.createLinearGradient(0, 0, 0, 600); g.addColorStop(0, top); g.addColorStop(1, bot);
-  c.fillStyle = g; c.fillRect(0, 0, 300, 620);
+  c.fillStyle = g; c.fillRect(-ox, 0, 300 + ox, 620);
   // mặt trời / trăng
   if (weather !== 'mua') {
     const dayP = (minute - 6 * 60) / (12 * 60);
-    if (dayP > 0 && dayP < 1) { const sx = 40 + dayP * 200, sy = 230 - Math.sin(dayP * Math.PI) * 150; c.save(); c.globalAlpha = 0.85; circ(c, sx, sy, 20, '#fff2b0', 0); c.restore(); }
-    else if (minute > 19 * 60) { circ(c, 200, 120, 13, '#f4f1d0', 0); circ(c, 206, 116, 11, top, 0); }
+    if (dayP > 0 && dayP < 1) { const sx = 40 - ox + dayP * (200 + ox), sy = 230 - Math.sin(dayP * Math.PI) * 150; c.save(); c.globalAlpha = 0.85; circ(c, sx, sy, 20, '#fff2b0', 0); c.restore(); }
+    else if (minute > 19 * 60) { circ(c, 200 - ox * 0.5, 120, 13, '#f4f1d0', 0); circ(c, 206 - ox * 0.5, 116, 11, top, 0); }
   }
   // mây
   c.save(); c.globalAlpha = weather === 'mua' ? 0.7 : 0.6;
   const cc = weather === 'mua' ? '#8f98a0' : '#ffffff';
-  for (let i = 0; i < 3; i++) {
-    const cx = ((t * 6 + i * 130) % 420) - 80, cy = 80 + i * 45;
+  const ncl = 3 + Math.ceil(ox / 140);
+  for (let i = 0; i < ncl; i++) {
+    const cx = ((t * 6 + i * 130) % (420 + ox)) - 80 - ox, cy = 80 + (i % 3) * 45;
     ell(c, cx, cy, 30, 12, cc, 0); ell(c, cx + 22, cy - 6, 22, 12, cc, 0); ell(c, cx - 20, cy + 2, 18, 9, cc, 0);
   }
   c.restore();
 }
 
-function buildBackLayer(c, st) {
+function buildBackLayer(c, st, ox = 0) {
+  if (ox > 0) drawOutsideExtra(c, ox);
   // --- ngoài phố ---
   // nhà phía xa
   const houses = [[-10, 250, 90, '#e8d9c0'], [78, 200, 80, '#d9c7aa'], [156, 280, 110, '#ead6b8']];
@@ -1258,18 +1309,20 @@ function buildBackLayer(c, st) {
   ell(c, 30, 470, 40, 34, '#6fa85a', 2, '#4a7a3a'); ell(c, 10, 440, 28, 24, '#7fb86a', 2, '#4a7a3a');
   rr(c, 24, 490, 10, 110, 3, '#8a5a3a', 2);
   // vỉa hè + đường
-  c.fillStyle = '#b9b2a6'; c.fillRect(0, 600, 300, 120);
+  c.fillStyle = '#b9b2a6'; c.fillRect(-ox, 600, 300 + ox, 120);
   c.strokeStyle = 'rgba(90,80,70,0.35)'; c.lineWidth = 1.5;
-  for (let x = -20; x < 300; x += 40) { c.beginPath(); c.moveTo(x, 600); c.lineTo(x + 30, 720); c.stroke(); }
-  for (let y = 630; y < 720; y += 30) { c.beginPath(); c.moveTo(0, y); c.lineTo(300, y); c.stroke(); }
-  line(c, 0, 600, 300, 600, '#7a6a5a', 3);
+  for (let x = -20 - Math.ceil(ox / 40) * 40; x < 300; x += 40) { c.beginPath(); c.moveTo(x, 600); c.lineTo(x + 30, 720); c.stroke(); }
+  for (let y = 630; y < 720; y += 30) { c.beginPath(); c.moveTo(-ox, y); c.lineTo(300, y); c.stroke(); }
+  line(c, -ox, 600, 300, 600, '#7a6a5a', 3);
+  if (ox > 0) drawScooter(c, -ox * 0.45, 652);
   // cột điện
   rr(c, 104, 40, 16, 580, 3, '#a7a29a', 2.5);
   for (let y = 80; y < 600; y += 46) line(c, 106, y, 118, y, '#8f8a82', 1.5);
   rr(c, 70, 110, 84, 9, 2, '#8f8a82', 2);
   rr(c, 122, 200, 26, 34, 3, '#d4d8d0', 2); line(c, 128, 208, 142, 208, '#888', 1.5);
   // dây điện chằng chịt
-  const wires = [[-20, 60, 300, 100, 40], [-20, 84, 300, 130, 30], [-20, 120, 300, 90, 50], [-20, 150, 300, 160, 25], [-20, 70, 300, 150, 60], [-20, 100, 300, 112, 20]];
+  const wx = -20 - ox;
+  const wires = [[wx, 60, 300, 100, 40], [wx, 84, 300, 130, 30], [wx, 120, 300, 90, 50], [wx, 150, 300, 160, 25], [wx, 70, 300, 150, 60], [wx, 100, 300, 112, 20]];
   wires.forEach(([x1, y1, x2, y2, sag], i) => {
     c.beginPath(); c.moveTo(x1, y1); c.quadraticCurveTo(112, Math.max(y1, y2) + sag, x2, y2);
     c.strokeStyle = i % 2 ? '#2a2a2a' : '#3a3a3a'; c.lineWidth = 1.6; c.stroke();
@@ -1566,15 +1619,15 @@ function drawBulbGlow(c, amt) {
   c.save(); c.shadowColor = '#ffd27a'; c.shadowBlur = 18 * k; circ(c, 1110, 126, 8, '#fff2b0', 1.5); c.restore();
 }
 
-function drawRain(c, t) {
-  c.save(); c.beginPath(); c.rect(0, 0, 262, 720); c.clip();
+function drawRain(c, t, ox = 0) {
+  c.save(); c.beginPath(); c.rect(-ox, 0, 262 + ox, 720); c.clip();
   c.strokeStyle = 'rgba(220,235,255,0.55)'; c.lineWidth = 1.4;
-  for (let i = 0; i < 70; i++) {
-    const x = (i * 37.3 + t * 60) % 300 - 20, y = (i * 91.7 + t * 620) % 720;
+  for (let i = 0; i < 70 + ox / 4; i++) {
+    const x = (i * 37.3 + t * 60) % (300 + ox) - 20 - ox, y = (i * 91.7 + t * 620) % 720;
     c.beginPath(); c.moveTo(x, y); c.lineTo(x - 5, y + 16); c.stroke();
   }
   c.restore();
-  c.save(); c.globalAlpha = 0.15; c.fillStyle = '#5a6a7a'; c.fillRect(0, 600, 262, 120); c.restore();
+  c.save(); c.globalAlpha = 0.15; c.fillStyle = '#5a6a7a'; c.fillRect(-ox, 600, 262 + ox, 120); c.restore();
 }
 
 // bong bóng thoại
@@ -1586,7 +1639,7 @@ function drawBubble(c, ax, ay, header, lines, patience, o = {}) {
   lines.forEach(l => { c.font = `bold 15px ${FONT_HAND}`; w = Math.max(w, c.measureText(l.text).width + (l.icon ? 34 : 0) + 34 + pad * 2); });
   w = Math.min(Math.max(w, 150), 300);
   const h = 32 + lines.length * lh + (patience !== null ? 12 : 0);
-  let x = ax - w / 2; x = Math.max(6, Math.min(x, 600 - w));
+  let x = ax - w / 2; x = Math.max(o.minX !== undefined ? o.minX : 6, Math.min(x, 600 - w));
   const y = ay - h - 14;
   // đuôi
   c.beginPath(); c.moveTo(ax - 10, y + h - 2); c.lineTo(ax + 2, ay); c.lineTo(ax + 12, y + h - 2); c.closePath(); fs(c, '#fffdf5', 2.5);
@@ -1630,6 +1683,50 @@ function drawTooltip(c, x, y, lines) {
   c.restore();
 }
 
+// phố kéo dài thêm bên trái cho màn hình dài (20:9...)
+function drawOutsideExtra(c, ox) {
+  const R = mulberry(77);
+  const cols = ['#e8d9c0', '#d9c7aa', '#ead6b8', '#e3cfb0', '#dcd3c2', '#e9c9b8', '#cfdccb'];
+  let x = -10;
+  while (x > -ox - 40) {
+    const w = 78 + Math.floor(R() * 50), y = 180 + Math.floor(R() * 120), col = pick(R, cols);
+    x -= w + 4;
+    rr(c, x, y, w, 600 - y, 0, col, 2, '#8a7a66');
+    const cols2 = w > 105 ? 3 : 2, ww = 22;
+    for (let r = 0; r < 5; r++) for (let k = 0; k < cols2; k++) {
+      const wx = x + 10 + k * ((w - 20 - ww) / Math.max(1, cols2 - 1)), wy = y + 22 + r * 66;
+      if (wy > 520) continue;
+      rr(c, wx, wy, ww, 30, 2, R() < 0.2 ? '#f2e3a8' : '#b7cfda', 1.5, '#8a7a66');
+      line(c, wx, wy + 15, wx + ww, wy + 15, '#8a7a66', 1);
+    }
+    rr(c, x - 4, y - 10, w + 8, 12, 2, shade(col, -0.25), 1.5, '#8a7a66');
+    if (R() < 0.5) { // ban công + chậu cây
+      const by = y + 84; rr(c, x + 6, by, w - 12, 7, 1, '#7a8a6a', 1.5);
+      for (let k = 0; k < 4; k++) circ(c, x + 16 + k * (w - 32) / 3, by - 6, 7, '#6fa85a', 1.2, '#4a7a3a');
+    }
+    if (R() < 0.6) { // mái hiên tầng trệt
+      c.beginPath(); c.moveTo(x - 4, 470); c.lineTo(x + w + 4, 470); c.lineTo(x + w + 10, 500); c.lineTo(x - 10, 500); c.closePath();
+      fs(c, pick(R, ['#d9483b', '#3a7cc9', '#2f9e74', '#e0a030']), 1.8);
+      for (let k = 0; k < 6; k++) line(c, x + k * w / 5, 470, x - 6 + k * (w + 12) / 5, 500, 'rgba(255,255,255,0.35)', 3);
+      rr(c, x + 10, 510, w - 20, 90, 2, '#6b5a4a', 1.5, '#5a4a3a');
+    }
+  }
+  // cây
+  const tx = -ox * 0.72;
+  rr(c, tx - 5, 470, 10, 130, 3, '#8a5a3a', 2);
+  ell(c, tx, 450, 42, 36, '#6fa85a', 2, '#4a7a3a'); ell(c, tx - 22, 430, 26, 22, '#7fb86a', 2, '#4a7a3a');
+}
+function drawScooter(c, x, y) {
+  c.save(); c.translate(x, y);
+  circ(c, -32, 0, 15, '#2a2a2a', 2.5); circ(c, -32, 0, 6, '#bbb', 1.5);
+  circ(c, 34, 0, 15, '#2a2a2a', 2.5); circ(c, 34, 0, 6, '#bbb', 1.5);
+  c.beginPath(); c.moveTo(-50, -10); c.quadraticCurveTo(-48, -36, -14, -34); c.lineTo(10, -30); c.lineTo(22, -8); c.lineTo(-40, -4); c.closePath(); fs(c, '#d9362b', 2.5);
+  rr(c, -44, -44, 46, 12, 6, '#3a2a22', 2.2);
+  c.beginPath(); c.moveTo(20, -8); c.lineTo(30, -58); c.lineTo(40, -58); c.lineTo(42, -4); c.closePath(); fs(c, '#d9362b', 2.2);
+  line(c, 26, -62, 48, -62, OUTLINE, 4); ell(c, 44, -48, 5, 4, '#fff2a0', 1.5);
+  c.restore();
+}
+
 // ---- js/ui.js ----
 'use strict';
 // ============================================================
@@ -1656,13 +1753,14 @@ const UI = (() => {
         <div class="chip debt" id="h-debt" title="Tổng tiền khách đang nợ"></div>
       </div>
       <div class="hgroup">
-        <button class="hbtn" id="b-stock">📦 Nhập hàng</button>
-        <button class="hbtn" id="b-up">🛠️ Nâng cấp</button>
-        <button class="hbtn" id="b-debt">📒 Sổ nợ</button>
+        <button class="hbtn" id="b-stock">📦<span class="lbl"> Nhập hàng</span></button>
+        <button class="hbtn" id="b-up">🛠️<span class="lbl"> Nâng cấp</span></button>
+        <button class="hbtn" id="b-debt">📒<span class="lbl"> Sổ nợ</span></button>
         <button class="hbtn sm" id="b-speed" title="Tốc độ">×1</button>
         <button class="hbtn sm" id="b-pause" title="Tạm dừng (Space)">⏸</button>
         <button class="hbtn sm" id="b-music" title="Nhạc nền">🎵</button>
         <button class="hbtn sm" id="b-sound" title="Âm thanh">🔊</button>
+        <button class="hbtn sm" id="b-fs" title="Toàn màn hình">⛶</button>
       </div>`;
     $('#b-stock').onclick = () => openRestock();
     $('#b-up').onclick = () => openUpgrades();
@@ -1673,6 +1771,15 @@ const UI = (() => {
     const musicBtn = () => { $('#b-music').classList.toggle('off', !MUSIC.enabled); $('#b-music').title = MUSIC.enabled ? 'Tắt nhạc nền' : 'Bật nhạc nền'; };
     $('#b-music').onclick = () => { SFX.ctx(); MUSIC.toggle(); musicBtn(); };
     musicBtn();
+    if (!canFullscreen()) $('#b-fs').style.display = 'none';
+    $('#b-fs').onclick = () => toggleFullscreen();
+    // màn hình dọc trên điện thoại
+    $('#rotate').innerHTML = `<div class="rot-box"><div class="rot-phone">📱</div>
+      <b>Xoay ngang điện thoại để chơi</b><span>Game chơi màn hình ngang cho to, dễ bấm</span>
+      ${canFullscreen() ? '<button class="btn go big" id="rot-go">⛶ Chơi toàn màn hình</button>' : '<span class="muted">iPhone: bấm Chia sẻ → "Thêm vào MH chính" để chơi toàn màn hình</span>'}
+      <button class="rot-skip" id="rot-skip">Vẫn chơi màn hình dọc</button></div>`;
+    const rg = $('#rot-go'); if (rg) rg.onclick = () => goFullscreen(true);
+    $('#rot-skip').onclick = () => document.body.classList.add('rot-skip');
     document.addEventListener('pointerdown', () => SFX.unlock(), { capture: true });
     $('#bar').addEventListener('click', onBarClick);
     $('#change').addEventListener('click', onChangeClick);
@@ -1689,7 +1796,8 @@ const UI = (() => {
   function updateHUD() {
     if (!G) return;
     const m = Math.floor(G.minute), hh = String(Math.floor(m / 60)).padStart(2, '0'), mm = String(m % 60).padStart(2, '0');
-    const key = [G.day, G.weather, hh, mm, G.money, G.rep.toFixed(2), totalDebt(), speed, paused, phase].join('|');
+    const fsOn = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    const key = [G.day, G.weather, hh, mm, G.money, G.rep.toFixed(2), totalDebt(), speed, paused, phase, fsOn].join('|');
     if (key === lastHud) return; lastHud = key;
     $('#h-day').textContent = `📅 Ngày ${G.day} ${G.weather === 'mua' ? '🌧️' : '☀️'}`;
     $('#h-time').textContent = `🕐 ${hh}:${mm}`;
@@ -1702,6 +1810,7 @@ const UI = (() => {
     $('#h-debt').style.display = d ? '' : 'none';
     $('#b-speed').textContent = '×' + speed;
     $('#b-pause').textContent = paused && (phase === 'open' || phase === 'closing') ? '▶' : '⏸';
+    $('#b-fs').classList.toggle('on', fsOn); $('#b-fs').title = fsOn ? 'Thoát toàn màn hình' : 'Toàn màn hình';
   }
   function tick() { updateHUD(); }
 
@@ -1935,7 +2044,7 @@ const UI = (() => {
       <div class="off-total">+${money(r.earned)}</div>
       ${r.ranOut ? '<p class="off-warn">⚠️ Kệ trống trơn rồi! Nhập đầy hàng trước khi đi để Cô Hoa bán được nhiều hơn.</p>' : '<p class="m-sub">Mẹo: uy tín càng cao, kệ càng đầy thì vắng mặt càng kiếm được nhiều.</p>'}
       <div class="m-acts"><button class="btn go big" data-off>💰 Nhận tiền</button></div></div>`, 'offline', { noClose: true });
-    $('#modal [data-off]').onclick = () => { SFX.unlock(); SFX.ching(); closeModal(); if (after) after(); };
+    $('#modal [data-off]').onclick = () => { SFX.unlock(); goFullscreen(); SFX.ching(); closeModal(); if (after) after(); };
   }
 
   // ---------------- tổng kết ngày ----------------
@@ -1993,10 +2102,10 @@ const UI = (() => {
       </div></div>`, 'menu', { noClose: true });
     const m = $('#modal');
     const c = m.querySelector('[data-m=cont]');
-    if (c) c.onclick = () => { SFX.unlock(); closeModal(); startDay(true); };
+    if (c) c.onclick = () => { SFX.unlock(); goFullscreen(); closeModal(); startDay(true); };
     const fresh = () => { G = newState(); rebuildLayers(); saveGame(); showHelp(true); };
     m.querySelector('[data-m=new]').onclick = () => {
-      SFX.unlock();
+      SFX.unlock(); goFullscreen();
       if (hasSave) ask('Xóa tiệm cũ và chơi lại từ đầu? Tiền, hàng và nâng cấp sẽ mất hết.', 'Chơi lại', fresh, () => showMenu(hasSave));
       else fresh();
     };
@@ -2045,6 +2154,8 @@ const stage = document.getElementById('stage');
 const backCv = document.createElement('canvas');
 const frontCv = document.createElement('canvas');
 let PR = 1;
+let SW = VW, OX = 0, UIK = 1;   // SW: bề ngang logic (co giãn theo màn hình), OX: phần phố kéo dài bên trái
+const MAX_W = 2200;
 
 const SAVE_KEY = 'tiemtaphoa_cohoa_v1';
 const rnd = () => Math.random();
@@ -2134,17 +2245,43 @@ const SFX = (() => {
 //  KHỞI TẠO & KÍCH THƯỚC
 // ============================================================
 function resize() {
-  const s = Math.min(innerWidth / VW, innerHeight / VH);
-  stage.style.transform = `translate(${(innerWidth - VW * s) / 2}px, ${(innerHeight - VH * s) / 2}px) scale(${s})`;
-  PR = s * (window.devicePixelRatio || 1);
-  canvas.width = Math.round(VW * PR); canvas.height = Math.round(VH * PR);
+  const w = window.innerWidth, h = window.innerHeight;
+  SW = Math.round(Math.max(VW, Math.min(MAX_W, VH * w / h)));
+  OX = SW - VW;
+  const s = Math.min(w / SW, h / VH);
+  stage.style.width = SW + 'px';
+  stage.style.transform = `translate(${(w - SW * s) / 2}px, ${(h - VH * s) / 2}px) scale(${s})`;
+  stage.style.setProperty('--ox', OX + 'px');
+  stage.style.setProperty('--s', s);
+  const phone = s < 0.78;
+  document.body.classList.toggle('phone', phone);
+  UIK = phone ? 1.3 : 1;
+  PR = s * Math.min(window.devicePixelRatio || 1, 3);
+  canvas.style.width = SW + 'px';
+  canvas.width = Math.round(SW * PR); canvas.height = Math.round(VH * PR);
   rebuildLayers();
 }
+// Toàn màn hình + khóa xoay ngang (Android). iPhone: dùng "Thêm vào MH chính".
+const isTouch = () => window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+function goFullscreen(force) {
+  const el = document.documentElement;
+  const lock = () => { try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => { }); } catch (e) { } };
+  if (document.fullscreenElement || document.webkitFullscreenElement) { lock(); return; }
+  if (!force && !isTouch()) return;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req) return;
+  try { const p = req.call(el, { navigationUI: 'hide' }); if (p && p.then) p.then(lock).catch(() => { }); else lock(); } catch (e) { }
+}
+function toggleFullscreen() {
+  if (document.fullscreenElement || document.webkitFullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+  else goFullscreen(true);
+}
+const canFullscreen = () => !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
 function rebuildLayers() {
   if (!G) return;
-  [[backCv, c => buildBackLayer(c, G)], [frontCv, c => buildFrontLayer(c)]].forEach(([cv, fn]) => {
+  [[backCv, c => buildBackLayer(c, G, OX)], [frontCv, c => buildFrontLayer(c)]].forEach(([cv, fn]) => {
     cv.width = canvas.width; cv.height = canvas.height;
-    const c = cv.getContext('2d'); c.setTransform(PR, 0, 0, PR, 0, 0); fn(c);
+    const c = cv.getContext('2d'); c.setTransform(PR, 0, 0, PR, OX * PR, 0); fn(c);
   });
 }
 
@@ -2210,7 +2347,7 @@ function spawnCustomer() {
   const look = makeLook(type, reg ? reg.name : 'khach' + (++cid) + rnd(), reg || {});
   customers.push({
     id: ++cid, type, reg, name: reg ? reg.name : T.label, look,
-    greet: rpick(T.greet), x: -80, walking: true, phase: 0,
+    greet: rpick(T.greet), x: -OX - 80, walking: true, phase: 0,
     state: 'queue', patience: 1, req, mood: 'neutral', say: null, sayUntil: 0, remindDone: false,
   });
   UI.refreshBar();
@@ -2556,7 +2693,7 @@ function update(dt) {
   customers.forEach((c, i) => {
     const T = CUSTOMER_TYPES[c.type];
     const tx = QUEUE_X[i];
-    if (Math.abs(c.x - tx) > 2) { c.walking = true; c.x += Math.sign(tx - c.x) * Math.min(Math.abs(tx - c.x), T.speed * sdt); c.phase += sdt * 9; }
+    if (Math.abs(c.x - tx) > 2) { const far = 1 + clamp((tx - c.x - 150) / 250, 0, 2.5); c.walking = true; c.x += Math.sign(tx - c.x) * Math.min(Math.abs(tx - c.x), T.speed * far * sdt); c.phase += sdt * 9 * Math.min(far, 1.6); }
     else { c.walking = false; c.x = tx; if (i === 0 && c.state === 'queue') arrive(c); }
     let mult = (i === 0 ? 1 : (G.upgrades.banghe ? 0.3 : 0.5)) * hot * fan;
     if (c.state === 'pay' || c.state === 'credit') mult *= 0.5;
@@ -2577,8 +2714,8 @@ function update(dt) {
   for (let i = leavers.length - 1; i >= 0; i--) {
     const c = leavers[i];
     if (c.leaveDelay > 0) { c.leaveDelay -= sdt; c.walking = false; continue; }
-    c.walking = true; c.x -= CUSTOMER_TYPES[c.type].speed * 1.1 * sdt; c.phase += sdt * 9;
-    if (c.x < -110) leavers.splice(i, 1);
+    c.walking = true; c.x -= CUSTOMER_TYPES[c.type].speed * (c.x < -150 ? 2.5 : 1.1) * sdt; c.phase += sdt * 9;
+    if (c.x < -OX - 110) leavers.splice(i, 1);
   }
   if (phase === 'closing' && customers.length === 0 && leavers.length === 0) endDay();
 }
@@ -2594,11 +2731,11 @@ function updateFx(dt) {
 //  VẼ
 // ============================================================
 function render() {
-  ctx.setTransform(PR, 0, 0, PR, 0, 0);
-  ctx.clearRect(0, 0, VW, VH);
-  drawSky(ctx, G.minute, G.weather, t);
-  ctx.drawImage(backCv, 0, 0, VW, VH);
-  if (G.weather === 'mua') drawRain(ctx, t);
+  ctx.setTransform(PR, 0, 0, PR, OX * PR, 0);
+  ctx.clearRect(-OX, 0, SW, VH);
+  drawSky(ctx, G.minute, G.weather, t, OX);
+  ctx.drawImage(backCv, -OX, 0, SW, VH);
+  if (G.weather === 'mua') drawRain(ctx, t, OX);
   drawClockHands(ctx, G.minute);
 
   for (const id in SLOTS) { const s = SLOTS[id]; if (s.counter) continue; drawSlot(ctx, id, s, G.stock[id], isLocked(id), hover === id, t); }
@@ -2612,7 +2749,7 @@ function render() {
   const hmood = hoa.until > t && (hoa.pose === 'wave') ? 'happy' : (!f ? 'happy' : 'neutral');
   drawChibi(ctx, HOA_X, HOA_FEET, LOOK_HOA, { t, pose, mood: hmood, talk: hoa.until > t && hoa.pose === 'wave' });
 
-  ctx.drawImage(frontCv, 0, 0, VW, VH);
+  ctx.drawImage(frontCv, -OX, 0, SW, VH);
   for (const id in SLOTS) { const s = SLOTS[id]; if (s.counter) drawSlot(ctx, id, s, G.stock[id], isLocked(id), hover === id, t); }
   drawSoNo(ctx, hover === '_sono');
   const calcText = calc.flashUntil > t ? calc.text : (payCtx ? (payCtx.total / 1000) + '.000' : (bagTotal() ? (bagTotal() / 1000) + '.000' : '0'));
@@ -2639,7 +2776,7 @@ function render() {
   // ánh sáng đêm
   const na = nightAmount(G.minute);
   if (na > 0) {
-    ctx.fillStyle = `rgba(18,22,60,${na})`; ctx.fillRect(0, 0, VW, VH);
+    ctx.fillStyle = `rgba(18,22,60,${na})`; ctx.fillRect(-OX, 0, SW, VH);
     drawBulbGlow(ctx, na);
   }
 
@@ -2650,10 +2787,10 @@ function render() {
     if (i === 0 && c.state !== 'queue') drawFrontBubble(c, headTop);
     else {
       drawMiniPatience(ctx, c.x, headTop - 12, clamp(c.patience, 0, 1));
-      if (c.sayUntil > t) drawBubble(ctx, c.x, headTop - 16, c.name, [{ text: c.say }], null);
+      if (c.sayUntil > t) bubbleAt(c.x, headTop - 16, c.name, [{ text: c.say }], null);
     }
   });
-  leavers.forEach(c => { if (c.sayUntil > t) drawBubble(ctx, c.x, CUST_FEET - 150 * (c.look.scale || 1), c.name, [{ text: c.say, color: c.mood === 'angry' ? '#c0392b' : undefined }], null); });
+  leavers.forEach(c => { if (c.sayUntil > t) bubbleAt(c.x, CUST_FEET - 150 * (c.look.scale || 1), c.name, [{ text: c.say, color: c.mood === 'angry' ? '#c0392b' : undefined }], null); });
 
   // hàng bay vào túi
   flyers.forEach(f => {
@@ -2674,9 +2811,17 @@ function render() {
   } else if (hover === '_sono') drawTooltip(ctx, mouse.x, mouse.y, ['Sổ nợ', 'Xem ai đang nợ tiệm']);
   else if (hover === '_calc') drawTooltip(ctx, mouse.x, mouse.y, ['Máy tính', payCtx ? 'Bấm để tính tiền thối (khách chờ lâu hơn)' : 'Hiện tổng tiền']);
 
-  if (phase === 'open' || phase === 'closing') { if (paused && !UI.modalOpen()) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, VW, VH); txt(ctx, 'TẠM DỪNG', VW / 2, VH / 2, 56, '#fff', { stroke: OUTLINE, sw: 6 }); } }
+  if (phase === 'open' || phase === 'closing') { if (paused && !UI.modalOpen()) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(-OX, 0, SW, VH); txt(ctx, 'TẠM DỪNG', SW / 2 - OX, VH / 2, 56, '#fff', { stroke: OUTLINE, sw: 6 }); } }
 }
 
+// bong bóng to hơn trên điện thoại
+function bubbleAt(ax, ay, header, lines, patience, o = {}) {
+  ctx.save();
+  ctx.translate(ax, ay); ctx.scale(UIK, UIK); ctx.translate(-ax, -ay);
+  o.minX = ax - (ax + OX - 6) / UIK;
+  drawBubble(ctx, ax, ay, header, lines, patience, o);
+  ctx.restore();
+}
 function reqText(r) {
   const it = ITEMS[r.id], nm = lower1(it.name);
   return nm.startsWith(it.unit + ' ') ? `${r.qty} ${nm}` : `${r.qty} ${it.unit} ${nm}`;
@@ -2695,7 +2840,7 @@ function drawFrontBubble(c, headTop) {
     header = talking ? c.say : c.name + ': Tiền nè cô!';
     lines = [{ text: 'Tổng: ' + money(payCtx.total) }, { text: 'Khách đưa: ' + money(payCtx.paid), color: '#2e7d4a' }];
   }
-  drawBubble(ctx, ax, ay, header, lines, clamp(c.patience, 0, 1), { headerColor: talking ? '#c0392b' : '#8a3a1a' });
+  bubbleAt(ax, ay, header, lines, clamp(c.patience, 0, 1), { headerColor: talking ? '#c0392b' : '#8a3a1a' });
 }
 
 // ============================================================
@@ -2703,7 +2848,7 @@ function drawFrontBubble(c, headTop) {
 // ============================================================
 function toLocal(e) {
   const r = canvas.getBoundingClientRect();
-  return { x: (e.clientX - r.left) * VW / r.width, y: (e.clientY - r.top) * VH / r.height };
+  return { x: (e.clientX - r.left) * SW / r.width - OX, y: (e.clientY - r.top) * VH / r.height };
 }
 function hitTest(x, y) {
   const inR = r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
@@ -2755,7 +2900,12 @@ async function boot() {
   buildIcons();
   const saved = loadGame();
   G = saved || newState();
-  window.addEventListener('resize', resize);
+  let rt = 0; const later = (ms = 80) => { clearTimeout(rt); rt = setTimeout(resize, ms); };
+  window.addEventListener('resize', () => later());
+  window.addEventListener('orientationchange', () => later(250));
+  document.addEventListener('fullscreenchange', () => { later(120); UI.updateHUD(); });
+  document.addEventListener('webkitfullscreenchange', () => later(120));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', () => later(120));
   resize();
   UI.init();
   const away = saved && saved.lastSeen ? Date.now() - saved.lastSeen : 0;

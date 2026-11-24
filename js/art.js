@@ -700,28 +700,30 @@ function nightAmount(m) {
   return Math.min(0.55, (m - 17.6 * 60) / (2 * 60) * 0.55);
 }
 
-function drawSky(c, minute, weather, t) {
+function drawSky(c, minute, weather, t, ox = 0) {
   let [top, bot] = lerpColorKeys(SKY_KEYS, minute);
   if (weather === 'mua') { top = mix(top, '#7d8a94', 0.6); bot = mix(bot, '#a9b3ba', 0.6); }
   const g = c.createLinearGradient(0, 0, 0, 600); g.addColorStop(0, top); g.addColorStop(1, bot);
-  c.fillStyle = g; c.fillRect(0, 0, 300, 620);
+  c.fillStyle = g; c.fillRect(-ox, 0, 300 + ox, 620);
   // mặt trời / trăng
   if (weather !== 'mua') {
     const dayP = (minute - 6 * 60) / (12 * 60);
-    if (dayP > 0 && dayP < 1) { const sx = 40 + dayP * 200, sy = 230 - Math.sin(dayP * Math.PI) * 150; c.save(); c.globalAlpha = 0.85; circ(c, sx, sy, 20, '#fff2b0', 0); c.restore(); }
-    else if (minute > 19 * 60) { circ(c, 200, 120, 13, '#f4f1d0', 0); circ(c, 206, 116, 11, top, 0); }
+    if (dayP > 0 && dayP < 1) { const sx = 40 - ox + dayP * (200 + ox), sy = 230 - Math.sin(dayP * Math.PI) * 150; c.save(); c.globalAlpha = 0.85; circ(c, sx, sy, 20, '#fff2b0', 0); c.restore(); }
+    else if (minute > 19 * 60) { circ(c, 200 - ox * 0.5, 120, 13, '#f4f1d0', 0); circ(c, 206 - ox * 0.5, 116, 11, top, 0); }
   }
   // mây
   c.save(); c.globalAlpha = weather === 'mua' ? 0.7 : 0.6;
   const cc = weather === 'mua' ? '#8f98a0' : '#ffffff';
-  for (let i = 0; i < 3; i++) {
-    const cx = ((t * 6 + i * 130) % 420) - 80, cy = 80 + i * 45;
+  const ncl = 3 + Math.ceil(ox / 140);
+  for (let i = 0; i < ncl; i++) {
+    const cx = ((t * 6 + i * 130) % (420 + ox)) - 80 - ox, cy = 80 + (i % 3) * 45;
     ell(c, cx, cy, 30, 12, cc, 0); ell(c, cx + 22, cy - 6, 22, 12, cc, 0); ell(c, cx - 20, cy + 2, 18, 9, cc, 0);
   }
   c.restore();
 }
 
-function buildBackLayer(c, st) {
+function buildBackLayer(c, st, ox = 0) {
+  if (ox > 0) drawOutsideExtra(c, ox);
   // --- ngoài phố ---
   // nhà phía xa
   const houses = [[-10, 250, 90, '#e8d9c0'], [78, 200, 80, '#d9c7aa'], [156, 280, 110, '#ead6b8']];
@@ -740,18 +742,20 @@ function buildBackLayer(c, st) {
   ell(c, 30, 470, 40, 34, '#6fa85a', 2, '#4a7a3a'); ell(c, 10, 440, 28, 24, '#7fb86a', 2, '#4a7a3a');
   rr(c, 24, 490, 10, 110, 3, '#8a5a3a', 2);
   // vỉa hè + đường
-  c.fillStyle = '#b9b2a6'; c.fillRect(0, 600, 300, 120);
+  c.fillStyle = '#b9b2a6'; c.fillRect(-ox, 600, 300 + ox, 120);
   c.strokeStyle = 'rgba(90,80,70,0.35)'; c.lineWidth = 1.5;
-  for (let x = -20; x < 300; x += 40) { c.beginPath(); c.moveTo(x, 600); c.lineTo(x + 30, 720); c.stroke(); }
-  for (let y = 630; y < 720; y += 30) { c.beginPath(); c.moveTo(0, y); c.lineTo(300, y); c.stroke(); }
-  line(c, 0, 600, 300, 600, '#7a6a5a', 3);
+  for (let x = -20 - Math.ceil(ox / 40) * 40; x < 300; x += 40) { c.beginPath(); c.moveTo(x, 600); c.lineTo(x + 30, 720); c.stroke(); }
+  for (let y = 630; y < 720; y += 30) { c.beginPath(); c.moveTo(-ox, y); c.lineTo(300, y); c.stroke(); }
+  line(c, -ox, 600, 300, 600, '#7a6a5a', 3);
+  if (ox > 0) drawScooter(c, -ox * 0.45, 652);
   // cột điện
   rr(c, 104, 40, 16, 580, 3, '#a7a29a', 2.5);
   for (let y = 80; y < 600; y += 46) line(c, 106, y, 118, y, '#8f8a82', 1.5);
   rr(c, 70, 110, 84, 9, 2, '#8f8a82', 2);
   rr(c, 122, 200, 26, 34, 3, '#d4d8d0', 2); line(c, 128, 208, 142, 208, '#888', 1.5);
   // dây điện chằng chịt
-  const wires = [[-20, 60, 300, 100, 40], [-20, 84, 300, 130, 30], [-20, 120, 300, 90, 50], [-20, 150, 300, 160, 25], [-20, 70, 300, 150, 60], [-20, 100, 300, 112, 20]];
+  const wx = -20 - ox;
+  const wires = [[wx, 60, 300, 100, 40], [wx, 84, 300, 130, 30], [wx, 120, 300, 90, 50], [wx, 150, 300, 160, 25], [wx, 70, 300, 150, 60], [wx, 100, 300, 112, 20]];
   wires.forEach(([x1, y1, x2, y2, sag], i) => {
     c.beginPath(); c.moveTo(x1, y1); c.quadraticCurveTo(112, Math.max(y1, y2) + sag, x2, y2);
     c.strokeStyle = i % 2 ? '#2a2a2a' : '#3a3a3a'; c.lineWidth = 1.6; c.stroke();
@@ -1048,15 +1052,15 @@ function drawBulbGlow(c, amt) {
   c.save(); c.shadowColor = '#ffd27a'; c.shadowBlur = 18 * k; circ(c, 1110, 126, 8, '#fff2b0', 1.5); c.restore();
 }
 
-function drawRain(c, t) {
-  c.save(); c.beginPath(); c.rect(0, 0, 262, 720); c.clip();
+function drawRain(c, t, ox = 0) {
+  c.save(); c.beginPath(); c.rect(-ox, 0, 262 + ox, 720); c.clip();
   c.strokeStyle = 'rgba(220,235,255,0.55)'; c.lineWidth = 1.4;
-  for (let i = 0; i < 70; i++) {
-    const x = (i * 37.3 + t * 60) % 300 - 20, y = (i * 91.7 + t * 620) % 720;
+  for (let i = 0; i < 70 + ox / 4; i++) {
+    const x = (i * 37.3 + t * 60) % (300 + ox) - 20 - ox, y = (i * 91.7 + t * 620) % 720;
     c.beginPath(); c.moveTo(x, y); c.lineTo(x - 5, y + 16); c.stroke();
   }
   c.restore();
-  c.save(); c.globalAlpha = 0.15; c.fillStyle = '#5a6a7a'; c.fillRect(0, 600, 262, 120); c.restore();
+  c.save(); c.globalAlpha = 0.15; c.fillStyle = '#5a6a7a'; c.fillRect(-ox, 600, 262 + ox, 120); c.restore();
 }
 
 // bong bóng thoại
@@ -1068,7 +1072,7 @@ function drawBubble(c, ax, ay, header, lines, patience, o = {}) {
   lines.forEach(l => { c.font = `bold 15px ${FONT_HAND}`; w = Math.max(w, c.measureText(l.text).width + (l.icon ? 34 : 0) + 34 + pad * 2); });
   w = Math.min(Math.max(w, 150), 300);
   const h = 32 + lines.length * lh + (patience !== null ? 12 : 0);
-  let x = ax - w / 2; x = Math.max(6, Math.min(x, 600 - w));
+  let x = ax - w / 2; x = Math.max(o.minX !== undefined ? o.minX : 6, Math.min(x, 600 - w));
   const y = ay - h - 14;
   // đuôi
   c.beginPath(); c.moveTo(ax - 10, y + h - 2); c.lineTo(ax + 2, ay); c.lineTo(ax + 12, y + h - 2); c.closePath(); fs(c, '#fffdf5', 2.5);
@@ -1109,5 +1113,49 @@ function drawTooltip(c, x, y, lines) {
   let tx = Math.min(x + 14, VW - w - 6), ty = Math.max(46, y - h - 8);
   rr(c, tx, ty, w, h, 8, 'rgba(59,42,32,0.92)', 0);
   lines.forEach((l, i) => txt(c, l, tx + 10, ty + 14 + i * 19, i === 0 ? 15 : 13, i === 0 ? '#ffe9a8' : '#fff', { align: 'left' }));
+  c.restore();
+}
+
+// phố kéo dài thêm bên trái cho màn hình dài (20:9...)
+function drawOutsideExtra(c, ox) {
+  const R = mulberry(77);
+  const cols = ['#e8d9c0', '#d9c7aa', '#ead6b8', '#e3cfb0', '#dcd3c2', '#e9c9b8', '#cfdccb'];
+  let x = -10;
+  while (x > -ox - 40) {
+    const w = 78 + Math.floor(R() * 50), y = 180 + Math.floor(R() * 120), col = pick(R, cols);
+    x -= w + 4;
+    rr(c, x, y, w, 600 - y, 0, col, 2, '#8a7a66');
+    const cols2 = w > 105 ? 3 : 2, ww = 22;
+    for (let r = 0; r < 5; r++) for (let k = 0; k < cols2; k++) {
+      const wx = x + 10 + k * ((w - 20 - ww) / Math.max(1, cols2 - 1)), wy = y + 22 + r * 66;
+      if (wy > 520) continue;
+      rr(c, wx, wy, ww, 30, 2, R() < 0.2 ? '#f2e3a8' : '#b7cfda', 1.5, '#8a7a66');
+      line(c, wx, wy + 15, wx + ww, wy + 15, '#8a7a66', 1);
+    }
+    rr(c, x - 4, y - 10, w + 8, 12, 2, shade(col, -0.25), 1.5, '#8a7a66');
+    if (R() < 0.5) { // ban công + chậu cây
+      const by = y + 84; rr(c, x + 6, by, w - 12, 7, 1, '#7a8a6a', 1.5);
+      for (let k = 0; k < 4; k++) circ(c, x + 16 + k * (w - 32) / 3, by - 6, 7, '#6fa85a', 1.2, '#4a7a3a');
+    }
+    if (R() < 0.6) { // mái hiên tầng trệt
+      c.beginPath(); c.moveTo(x - 4, 470); c.lineTo(x + w + 4, 470); c.lineTo(x + w + 10, 500); c.lineTo(x - 10, 500); c.closePath();
+      fs(c, pick(R, ['#d9483b', '#3a7cc9', '#2f9e74', '#e0a030']), 1.8);
+      for (let k = 0; k < 6; k++) line(c, x + k * w / 5, 470, x - 6 + k * (w + 12) / 5, 500, 'rgba(255,255,255,0.35)', 3);
+      rr(c, x + 10, 510, w - 20, 90, 2, '#6b5a4a', 1.5, '#5a4a3a');
+    }
+  }
+  // cây
+  const tx = -ox * 0.72;
+  rr(c, tx - 5, 470, 10, 130, 3, '#8a5a3a', 2);
+  ell(c, tx, 450, 42, 36, '#6fa85a', 2, '#4a7a3a'); ell(c, tx - 22, 430, 26, 22, '#7fb86a', 2, '#4a7a3a');
+}
+function drawScooter(c, x, y) {
+  c.save(); c.translate(x, y);
+  circ(c, -32, 0, 15, '#2a2a2a', 2.5); circ(c, -32, 0, 6, '#bbb', 1.5);
+  circ(c, 34, 0, 15, '#2a2a2a', 2.5); circ(c, 34, 0, 6, '#bbb', 1.5);
+  c.beginPath(); c.moveTo(-50, -10); c.quadraticCurveTo(-48, -36, -14, -34); c.lineTo(10, -30); c.lineTo(22, -8); c.lineTo(-40, -4); c.closePath(); fs(c, '#d9362b', 2.5);
+  rr(c, -44, -44, 46, 12, 6, '#3a2a22', 2.2);
+  c.beginPath(); c.moveTo(20, -8); c.lineTo(30, -58); c.lineTo(40, -58); c.lineTo(42, -4); c.closePath(); fs(c, '#d9362b', 2.2);
+  line(c, 26, -62, 48, -62, OUTLINE, 4); ell(c, 44, -48, 5, 4, '#fff2a0', 1.5);
   c.restore();
 }

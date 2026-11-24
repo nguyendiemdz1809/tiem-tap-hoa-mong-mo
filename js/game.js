@@ -9,6 +9,8 @@ const stage = document.getElementById('stage');
 const backCv = document.createElement('canvas');
 const frontCv = document.createElement('canvas');
 let PR = 1;
+let SW = VW, OX = 0, UIK = 1;   // SW: bề ngang logic (co giãn theo màn hình), OX: phần phố kéo dài bên trái
+const MAX_W = 2200;
 
 const SAVE_KEY = 'tiemtaphoa_cohoa_v1';
 const rnd = () => Math.random();
@@ -98,17 +100,43 @@ const SFX = (() => {
 //  KHỞI TẠO & KÍCH THƯỚC
 // ============================================================
 function resize() {
-  const s = Math.min(innerWidth / VW, innerHeight / VH);
-  stage.style.transform = `translate(${(innerWidth - VW * s) / 2}px, ${(innerHeight - VH * s) / 2}px) scale(${s})`;
-  PR = s * (window.devicePixelRatio || 1);
-  canvas.width = Math.round(VW * PR); canvas.height = Math.round(VH * PR);
+  const w = window.innerWidth, h = window.innerHeight;
+  SW = Math.round(Math.max(VW, Math.min(MAX_W, VH * w / h)));
+  OX = SW - VW;
+  const s = Math.min(w / SW, h / VH);
+  stage.style.width = SW + 'px';
+  stage.style.transform = `translate(${(w - SW * s) / 2}px, ${(h - VH * s) / 2}px) scale(${s})`;
+  stage.style.setProperty('--ox', OX + 'px');
+  stage.style.setProperty('--s', s);
+  const phone = s < 0.78;
+  document.body.classList.toggle('phone', phone);
+  UIK = phone ? 1.3 : 1;
+  PR = s * Math.min(window.devicePixelRatio || 1, 3);
+  canvas.style.width = SW + 'px';
+  canvas.width = Math.round(SW * PR); canvas.height = Math.round(VH * PR);
   rebuildLayers();
 }
+// Toàn màn hình + khóa xoay ngang (Android). iPhone: dùng "Thêm vào MH chính".
+const isTouch = () => window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+function goFullscreen(force) {
+  const el = document.documentElement;
+  const lock = () => { try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => { }); } catch (e) { } };
+  if (document.fullscreenElement || document.webkitFullscreenElement) { lock(); return; }
+  if (!force && !isTouch()) return;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req) return;
+  try { const p = req.call(el, { navigationUI: 'hide' }); if (p && p.then) p.then(lock).catch(() => { }); else lock(); } catch (e) { }
+}
+function toggleFullscreen() {
+  if (document.fullscreenElement || document.webkitFullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+  else goFullscreen(true);
+}
+const canFullscreen = () => !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
 function rebuildLayers() {
   if (!G) return;
-  [[backCv, c => buildBackLayer(c, G)], [frontCv, c => buildFrontLayer(c)]].forEach(([cv, fn]) => {
+  [[backCv, c => buildBackLayer(c, G, OX)], [frontCv, c => buildFrontLayer(c)]].forEach(([cv, fn]) => {
     cv.width = canvas.width; cv.height = canvas.height;
-    const c = cv.getContext('2d'); c.setTransform(PR, 0, 0, PR, 0, 0); fn(c);
+    const c = cv.getContext('2d'); c.setTransform(PR, 0, 0, PR, OX * PR, 0); fn(c);
   });
 }
 
@@ -174,7 +202,7 @@ function spawnCustomer() {
   const look = makeLook(type, reg ? reg.name : 'khach' + (++cid) + rnd(), reg || {});
   customers.push({
     id: ++cid, type, reg, name: reg ? reg.name : T.label, look,
-    greet: rpick(T.greet), x: -80, walking: true, phase: 0,
+    greet: rpick(T.greet), x: -OX - 80, walking: true, phase: 0,
     state: 'queue', patience: 1, req, mood: 'neutral', say: null, sayUntil: 0, remindDone: false,
   });
   UI.refreshBar();
@@ -520,7 +548,7 @@ function update(dt) {
   customers.forEach((c, i) => {
     const T = CUSTOMER_TYPES[c.type];
     const tx = QUEUE_X[i];
-    if (Math.abs(c.x - tx) > 2) { c.walking = true; c.x += Math.sign(tx - c.x) * Math.min(Math.abs(tx - c.x), T.speed * sdt); c.phase += sdt * 9; }
+    if (Math.abs(c.x - tx) > 2) { const far = 1 + clamp((tx - c.x - 150) / 250, 0, 2.5); c.walking = true; c.x += Math.sign(tx - c.x) * Math.min(Math.abs(tx - c.x), T.speed * far * sdt); c.phase += sdt * 9 * Math.min(far, 1.6); }
     else { c.walking = false; c.x = tx; if (i === 0 && c.state === 'queue') arrive(c); }
     let mult = (i === 0 ? 1 : (G.upgrades.banghe ? 0.3 : 0.5)) * hot * fan;
     if (c.state === 'pay' || c.state === 'credit') mult *= 0.5;
@@ -541,8 +569,8 @@ function update(dt) {
   for (let i = leavers.length - 1; i >= 0; i--) {
     const c = leavers[i];
     if (c.leaveDelay > 0) { c.leaveDelay -= sdt; c.walking = false; continue; }
-    c.walking = true; c.x -= CUSTOMER_TYPES[c.type].speed * 1.1 * sdt; c.phase += sdt * 9;
-    if (c.x < -110) leavers.splice(i, 1);
+    c.walking = true; c.x -= CUSTOMER_TYPES[c.type].speed * (c.x < -150 ? 2.5 : 1.1) * sdt; c.phase += sdt * 9;
+    if (c.x < -OX - 110) leavers.splice(i, 1);
   }
   if (phase === 'closing' && customers.length === 0 && leavers.length === 0) endDay();
 }
@@ -558,11 +586,11 @@ function updateFx(dt) {
 //  VẼ
 // ============================================================
 function render() {
-  ctx.setTransform(PR, 0, 0, PR, 0, 0);
-  ctx.clearRect(0, 0, VW, VH);
-  drawSky(ctx, G.minute, G.weather, t);
-  ctx.drawImage(backCv, 0, 0, VW, VH);
-  if (G.weather === 'mua') drawRain(ctx, t);
+  ctx.setTransform(PR, 0, 0, PR, OX * PR, 0);
+  ctx.clearRect(-OX, 0, SW, VH);
+  drawSky(ctx, G.minute, G.weather, t, OX);
+  ctx.drawImage(backCv, -OX, 0, SW, VH);
+  if (G.weather === 'mua') drawRain(ctx, t, OX);
   drawClockHands(ctx, G.minute);
 
   for (const id in SLOTS) { const s = SLOTS[id]; if (s.counter) continue; drawSlot(ctx, id, s, G.stock[id], isLocked(id), hover === id, t); }
@@ -576,7 +604,7 @@ function render() {
   const hmood = hoa.until > t && (hoa.pose === 'wave') ? 'happy' : (!f ? 'happy' : 'neutral');
   drawChibi(ctx, HOA_X, HOA_FEET, LOOK_HOA, { t, pose, mood: hmood, talk: hoa.until > t && hoa.pose === 'wave' });
 
-  ctx.drawImage(frontCv, 0, 0, VW, VH);
+  ctx.drawImage(frontCv, -OX, 0, SW, VH);
   for (const id in SLOTS) { const s = SLOTS[id]; if (s.counter) drawSlot(ctx, id, s, G.stock[id], isLocked(id), hover === id, t); }
   drawSoNo(ctx, hover === '_sono');
   const calcText = calc.flashUntil > t ? calc.text : (payCtx ? (payCtx.total / 1000) + '.000' : (bagTotal() ? (bagTotal() / 1000) + '.000' : '0'));
@@ -603,7 +631,7 @@ function render() {
   // ánh sáng đêm
   const na = nightAmount(G.minute);
   if (na > 0) {
-    ctx.fillStyle = `rgba(18,22,60,${na})`; ctx.fillRect(0, 0, VW, VH);
+    ctx.fillStyle = `rgba(18,22,60,${na})`; ctx.fillRect(-OX, 0, SW, VH);
     drawBulbGlow(ctx, na);
   }
 
@@ -614,10 +642,10 @@ function render() {
     if (i === 0 && c.state !== 'queue') drawFrontBubble(c, headTop);
     else {
       drawMiniPatience(ctx, c.x, headTop - 12, clamp(c.patience, 0, 1));
-      if (c.sayUntil > t) drawBubble(ctx, c.x, headTop - 16, c.name, [{ text: c.say }], null);
+      if (c.sayUntil > t) bubbleAt(c.x, headTop - 16, c.name, [{ text: c.say }], null);
     }
   });
-  leavers.forEach(c => { if (c.sayUntil > t) drawBubble(ctx, c.x, CUST_FEET - 150 * (c.look.scale || 1), c.name, [{ text: c.say, color: c.mood === 'angry' ? '#c0392b' : undefined }], null); });
+  leavers.forEach(c => { if (c.sayUntil > t) bubbleAt(c.x, CUST_FEET - 150 * (c.look.scale || 1), c.name, [{ text: c.say, color: c.mood === 'angry' ? '#c0392b' : undefined }], null); });
 
   // hàng bay vào túi
   flyers.forEach(f => {
@@ -638,9 +666,17 @@ function render() {
   } else if (hover === '_sono') drawTooltip(ctx, mouse.x, mouse.y, ['Sổ nợ', 'Xem ai đang nợ tiệm']);
   else if (hover === '_calc') drawTooltip(ctx, mouse.x, mouse.y, ['Máy tính', payCtx ? 'Bấm để tính tiền thối (khách chờ lâu hơn)' : 'Hiện tổng tiền']);
 
-  if (phase === 'open' || phase === 'closing') { if (paused && !UI.modalOpen()) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, VW, VH); txt(ctx, 'TẠM DỪNG', VW / 2, VH / 2, 56, '#fff', { stroke: OUTLINE, sw: 6 }); } }
+  if (phase === 'open' || phase === 'closing') { if (paused && !UI.modalOpen()) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(-OX, 0, SW, VH); txt(ctx, 'TẠM DỪNG', SW / 2 - OX, VH / 2, 56, '#fff', { stroke: OUTLINE, sw: 6 }); } }
 }
 
+// bong bóng to hơn trên điện thoại
+function bubbleAt(ax, ay, header, lines, patience, o = {}) {
+  ctx.save();
+  ctx.translate(ax, ay); ctx.scale(UIK, UIK); ctx.translate(-ax, -ay);
+  o.minX = ax - (ax + OX - 6) / UIK;
+  drawBubble(ctx, ax, ay, header, lines, patience, o);
+  ctx.restore();
+}
 function reqText(r) {
   const it = ITEMS[r.id], nm = lower1(it.name);
   return nm.startsWith(it.unit + ' ') ? `${r.qty} ${nm}` : `${r.qty} ${it.unit} ${nm}`;
@@ -659,7 +695,7 @@ function drawFrontBubble(c, headTop) {
     header = talking ? c.say : c.name + ': Tiền nè cô!';
     lines = [{ text: 'Tổng: ' + money(payCtx.total) }, { text: 'Khách đưa: ' + money(payCtx.paid), color: '#2e7d4a' }];
   }
-  drawBubble(ctx, ax, ay, header, lines, clamp(c.patience, 0, 1), { headerColor: talking ? '#c0392b' : '#8a3a1a' });
+  bubbleAt(ax, ay, header, lines, clamp(c.patience, 0, 1), { headerColor: talking ? '#c0392b' : '#8a3a1a' });
 }
 
 // ============================================================
@@ -667,7 +703,7 @@ function drawFrontBubble(c, headTop) {
 // ============================================================
 function toLocal(e) {
   const r = canvas.getBoundingClientRect();
-  return { x: (e.clientX - r.left) * VW / r.width, y: (e.clientY - r.top) * VH / r.height };
+  return { x: (e.clientX - r.left) * SW / r.width - OX, y: (e.clientY - r.top) * VH / r.height };
 }
 function hitTest(x, y) {
   const inR = r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
@@ -719,7 +755,12 @@ async function boot() {
   buildIcons();
   const saved = loadGame();
   G = saved || newState();
-  window.addEventListener('resize', resize);
+  let rt = 0; const later = (ms = 80) => { clearTimeout(rt); rt = setTimeout(resize, ms); };
+  window.addEventListener('resize', () => later());
+  window.addEventListener('orientationchange', () => later(250));
+  document.addEventListener('fullscreenchange', () => { later(120); UI.updateHUD(); });
+  document.addEventListener('webkitfullscreenchange', () => later(120));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', () => later(120));
   resize();
   UI.init();
   const away = saved && saved.lastSeen ? Date.now() - saved.lastSeen : 0;

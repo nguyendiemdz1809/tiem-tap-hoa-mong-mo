@@ -33,15 +33,21 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <circle cx="322" cy="370" r="26" fill="#3fae4a" stroke="#3b2a20" stroke-width="8"/>
 </svg>`;
 write('web/icon.svg', ICON);
+for (const n of [192, 512]) fs.copyFileSync(path.join(root, `assets/icon-${n}.png`), path.join(root, `web/icon-${n}.png`));
 write('web/manifest.webmanifest', JSON.stringify({
   name: 'Tiệm Tạp Hóa Mộng Mơ', short_name: 'Mộng Mơ', start_url: './', scope: './',
   display: 'fullscreen', orientation: 'landscape', background_color: '#2b211b', theme_color: '#3b2a20', lang: 'vi',
-  icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
+  icons: [
+    { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+    { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml' },
+  ],
 }, null, 2));
 write('web/sw.js', `// Service worker: lưu game vào máy để chơi được khi mất mạng
 const CACHE = 'mongmo-${VERSION}';
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html', './manifest.webmanifest', './icon.svg'])).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'])).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
@@ -72,7 +78,9 @@ const page = `<!DOCTYPE html>
 <meta property="og:description" content="Vào làm bà chủ tiệm tạp hóa: bán hàng, thối tiền, ghi sổ nợ!">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 ${FONT}

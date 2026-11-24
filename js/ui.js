@@ -23,13 +23,14 @@ const UI = (() => {
         <div class="chip debt" id="h-debt" title="Tổng tiền khách đang nợ"></div>
       </div>
       <div class="hgroup">
-        <button class="hbtn" id="b-stock">📦 Nhập hàng</button>
-        <button class="hbtn" id="b-up">🛠️ Nâng cấp</button>
-        <button class="hbtn" id="b-debt">📒 Sổ nợ</button>
+        <button class="hbtn" id="b-stock">📦<span class="lbl"> Nhập hàng</span></button>
+        <button class="hbtn" id="b-up">🛠️<span class="lbl"> Nâng cấp</span></button>
+        <button class="hbtn" id="b-debt">📒<span class="lbl"> Sổ nợ</span></button>
         <button class="hbtn sm" id="b-speed" title="Tốc độ">×1</button>
         <button class="hbtn sm" id="b-pause" title="Tạm dừng (Space)">⏸</button>
         <button class="hbtn sm" id="b-music" title="Nhạc nền">🎵</button>
         <button class="hbtn sm" id="b-sound" title="Âm thanh">🔊</button>
+        <button class="hbtn sm" id="b-fs" title="Toàn màn hình">⛶</button>
       </div>`;
     $('#b-stock').onclick = () => openRestock();
     $('#b-up').onclick = () => openUpgrades();
@@ -40,6 +41,15 @@ const UI = (() => {
     const musicBtn = () => { $('#b-music').classList.toggle('off', !MUSIC.enabled); $('#b-music').title = MUSIC.enabled ? 'Tắt nhạc nền' : 'Bật nhạc nền'; };
     $('#b-music').onclick = () => { SFX.ctx(); MUSIC.toggle(); musicBtn(); };
     musicBtn();
+    if (!canFullscreen()) $('#b-fs').style.display = 'none';
+    $('#b-fs').onclick = () => toggleFullscreen();
+    // màn hình dọc trên điện thoại
+    $('#rotate').innerHTML = `<div class="rot-box"><div class="rot-phone">📱</div>
+      <b>Xoay ngang điện thoại để chơi</b><span>Game chơi màn hình ngang cho to, dễ bấm</span>
+      ${canFullscreen() ? '<button class="btn go big" id="rot-go">⛶ Chơi toàn màn hình</button>' : '<span class="muted">iPhone: bấm Chia sẻ → "Thêm vào MH chính" để chơi toàn màn hình</span>'}
+      <button class="rot-skip" id="rot-skip">Vẫn chơi màn hình dọc</button></div>`;
+    const rg = $('#rot-go'); if (rg) rg.onclick = () => goFullscreen(true);
+    $('#rot-skip').onclick = () => document.body.classList.add('rot-skip');
     document.addEventListener('pointerdown', () => SFX.unlock(), { capture: true });
     $('#bar').addEventListener('click', onBarClick);
     $('#change').addEventListener('click', onChangeClick);
@@ -56,7 +66,8 @@ const UI = (() => {
   function updateHUD() {
     if (!G) return;
     const m = Math.floor(G.minute), hh = String(Math.floor(m / 60)).padStart(2, '0'), mm = String(m % 60).padStart(2, '0');
-    const key = [G.day, G.weather, hh, mm, G.money, G.rep.toFixed(2), totalDebt(), speed, paused, phase].join('|');
+    const fsOn = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    const key = [G.day, G.weather, hh, mm, G.money, G.rep.toFixed(2), totalDebt(), speed, paused, phase, fsOn].join('|');
     if (key === lastHud) return; lastHud = key;
     $('#h-day').textContent = `📅 Ngày ${G.day} ${G.weather === 'mua' ? '🌧️' : '☀️'}`;
     $('#h-time').textContent = `🕐 ${hh}:${mm}`;
@@ -69,6 +80,7 @@ const UI = (() => {
     $('#h-debt').style.display = d ? '' : 'none';
     $('#b-speed').textContent = '×' + speed;
     $('#b-pause').textContent = paused && (phase === 'open' || phase === 'closing') ? '▶' : '⏸';
+    $('#b-fs').classList.toggle('on', fsOn); $('#b-fs').title = fsOn ? 'Thoát toàn màn hình' : 'Toàn màn hình';
   }
   function tick() { updateHUD(); }
 
@@ -302,7 +314,7 @@ const UI = (() => {
       <div class="off-total">+${money(r.earned)}</div>
       ${r.ranOut ? '<p class="off-warn">⚠️ Kệ trống trơn rồi! Nhập đầy hàng trước khi đi để Cô Hoa bán được nhiều hơn.</p>' : '<p class="m-sub">Mẹo: uy tín càng cao, kệ càng đầy thì vắng mặt càng kiếm được nhiều.</p>'}
       <div class="m-acts"><button class="btn go big" data-off>💰 Nhận tiền</button></div></div>`, 'offline', { noClose: true });
-    $('#modal [data-off]').onclick = () => { SFX.unlock(); SFX.ching(); closeModal(); if (after) after(); };
+    $('#modal [data-off]').onclick = () => { SFX.unlock(); goFullscreen(); SFX.ching(); closeModal(); if (after) after(); };
   }
 
   // ---------------- tổng kết ngày ----------------
@@ -360,10 +372,10 @@ const UI = (() => {
       </div></div>`, 'menu', { noClose: true });
     const m = $('#modal');
     const c = m.querySelector('[data-m=cont]');
-    if (c) c.onclick = () => { SFX.unlock(); closeModal(); startDay(true); };
+    if (c) c.onclick = () => { SFX.unlock(); goFullscreen(); closeModal(); startDay(true); };
     const fresh = () => { G = newState(); rebuildLayers(); saveGame(); showHelp(true); };
     m.querySelector('[data-m=new]').onclick = () => {
-      SFX.unlock();
+      SFX.unlock(); goFullscreen();
       if (hasSave) ask('Xóa tiệm cũ và chơi lại từ đầu? Tiền, hàng và nâng cấp sẽ mất hết.', 'Chơi lại', fresh, () => showMenu(hasSave));
       else fresh();
     };
