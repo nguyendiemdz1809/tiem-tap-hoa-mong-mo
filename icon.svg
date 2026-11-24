@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" rx="96" fill="#f4e3a1"/>
+<path d="M60 190 L256 90 L452 190 Z" fill="#9aa3a8" stroke="#3b2a20" stroke-width="14" stroke-linejoin="round"/>
+<rect x="96" y="190" width="320" height="250" fill="#efdcb4" stroke="#3b2a20" stroke-width="14"/>
+<rect x="128" y="300" width="256" height="140" fill="#9a6a3f" stroke="#3b2a20" stroke-width="12"/>
+<rect x="120" y="205" width="272" height="70" rx="12" fill="#fff6cf" stroke="#3b2a20" stroke-width="10"/>
+<text x="256" y="254" font-family="Arial, sans-serif" font-weight="bold" font-size="42" text-anchor="middle" fill="#e0368a">MỘNG MƠ</text>
+<circle cx="190" cy="370" r="26" fill="#e8559a" stroke="#3b2a20" stroke-width="8"/>
+<circle cx="256" cy="370" r="26" fill="#f6c431" stroke="#3b2a20" stroke-width="8"/>
+<circle cx="322" cy="370" r="26" fill="#3fae4a" stroke="#3b2a20" stroke-width="8"/>
+</svg>
